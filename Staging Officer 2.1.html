@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staging Officer Tactical Board</title>
+    
+    <meta name="theme-color" content="#1f2937"/>
+    <link rel="manifest" href="manifest.json">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* gray-900 */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+        .drop-zone {
+            transition: all 0.2s ease;
+            min-height: 200px;
+        }
+        .drop-zone.drag-over {
+            border-color: #3b82f6;
+            background-color: #1f2937;
+        }
+        .unit-card {
+            cursor: grab;
+            transition: all 0.2s;
+        }
+        .unit-card:active {
+            cursor: grabbing;
+        }
+        .unit-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        
+        .tab-btn.active {
+            background-color: #374151; /* gray-700 */
+            color: white;
+            border-color: #4b5563;
+            border-bottom-color: #374151;
+        }
+        .tab-btn.inactive {
+            background-color: #1f2937; /* gray-900 */
+            color: #9ca3af; /* gray-400 */
+            border-color: transparent;
+        }
+        .tab-btn.inactive:hover {
+            color: white;
+            background-color: #111827;
+        }
+    </style>
+</head>
+<body class="text-gray-100 h-full flex flex-col p-4 md:p-6 max-w-7xl mx-auto w-full">
+
+    <header class="mb-6 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+            <a href="index.html" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg border border-gray-700 transition-colors text-sm font-medium">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Main Menu
+            </a>
+            <h1 class="text-2xl md:text-3xl font-bold text-white text-center flex-1">Staging Officer Board</h1>
+            <div class="w-[100px]"></div> </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg">
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase">Address</label>
+                <input type="text" class="w-full bg-transparent text-white font-bold border-b border-gray-600 focus:border-blue-500 outline-none py-1" placeholder="123 Main St">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase">Incident #</label>
+                <input type="text" class="w-full bg-transparent text-white font-bold border-b border-gray-600 focus:border-blue-500 outline-none py-1" placeholder="2025-001">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase">Staging Officer</label>
+                <input type="text" class="w-full bg-transparent text-white font-bold border-b border-gray-600 focus:border-blue-500 outline-none py-1" placeholder="Capt. Name">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase">Staging Location</label>
+                <input type="text" class="w-full bg-transparent text-white font-bold border-b border-gray-600 focus:border-blue-500 outline-none py-1" placeholder="Primary Location">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase">Tactical Channel</label>
+                <input type="text" class="w-full bg-transparent text-blue-400 font-bold border-b border-gray-600 focus:border-blue-500 outline-none py-1" value="TAC 3">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase">Staging Channel</label>
+                <input type="text" class="w-full bg-transparent text-blue-400 font-bold border-b border-gray-600 focus:border-blue-500 outline-none py-1" value="TAC 4">
+            </div>
+        </div>
+    </header>
+
+    <div class="flex border-b border-gray-700 mb-6">
+        <button id="tab-board-btn" class="tab-btn active px-6 py-3 rounded-t-lg text-sm font-bold border-t border-l border-r transition-colors flex items-center gap-2">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Tactical Board
+        </button>
+        <button id="tab-entry-btn" class="tab-btn inactive px-6 py-3 rounded-t-lg text-sm font-bold border-t border-l border-r transition-colors flex items-center gap-2">
+             <i data-lucide="plus-square" class="w-4 h-4"></i> Unit Entry
+        </button>
+    </div>
+
+    <main id="view-board" class="flex-1 flex flex-col gap-6">
+        
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-blue-900/20 border border-blue-500/50 p-4 rounded-xl flex items-center justify-between">
+                <div>
+                    <h3 class="text-blue-400 text-sm font-bold uppercase">In Staging</h3>
+                    <div class="text-xs text-gray-400">Available Resources</div>
+                </div>
+                <div class="text-right">
+                    <div id="count-staging-units" class="text-3xl font-bold text-white leading-none">0</div>
+                    <div class="text-[10px] text-gray-400 uppercase">Units</div>
+                </div>
+            </div>
+            
+            <div class="bg-red-900/20 border border-red-500/50 p-4 rounded-xl flex items-center justify-between">
+                <div>
+                    <h3 class="text-red-400 text-sm font-bold uppercase">Deployed / Assigned</h3>
+                    <div class="text-xs text-gray-400">Committed Resources</div>
+                </div>
+                <div class="text-right">
+                    <div id="count-deployed-units" class="text-3xl font-bold text-white leading-none">0</div>
+                    <div class="text-[10px] text-gray-400 uppercase">Units</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[400px]">
+            
+            <div class="flex flex-col bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+                <div class="p-3 bg-blue-900/30 border-b border-blue-500/30 flex justify-between items-center">
+                    <h3 class="font-bold text-blue-100 flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4"></i> Staging Area
+                    </h3>
+                </div>
+                <div id="zone-staging" class="drop-zone flex-1 p-3 space-y-2 bg-gray-800/50" ondragover="allowDrop(event)" ondrop="drop(event, 'staging')">
+                    </div>
+            </div>
+
+            <div class="flex flex-col bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+                <div class="p-3 bg-red-900/30 border-b border-red-500/30 flex justify-between items-center">
+                    <h3 class="font-bold text-red-100 flex items-center gap-2">
+                        <i data-lucide="arrow-right-circle" class="w-4 h-4"></i> Deployed / Assigned
+                    </h3>
+                </div>
+                <div id="zone-deployed" class="drop-zone flex-1 p-3 space-y-2 bg-gray-800/50" ondragover="allowDrop(event)" ondrop="drop(event, 'deployed')">
+                    </div>
+            </div>
+
+        </div>
+    </main>
+
+    <main id="view-entry" class="hidden flex-1 max-w-2xl mx-auto w-full">
+        <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
+            <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <i data-lucide="plus-circle" class="text-green-500"></i> Check-In New Unit
+            </h2>
+            
+            <form id="add-unit-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Unit ID</label>
+                    <input type="text" id="entry-id" class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-white text-lg font-bold focus:border-blue-500 outline-none uppercase" placeholder="E1, T4, R12..." required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Unit Type</label>
+                        <select id="entry-type" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 outline-none">
+                            <option value="Engine">Engine</option>
+                            <option value="Truck">Truck</option>
+                            <option value="Rescue">Rescue</option>
+                            <option value="Squad">Squad</option>
+                            <option value="Chief">Chief / Officer</option>
+                            <option value="Brush">Brush</option>
+                            <option value="Hazmat">Hazmat</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Personnel Count</label>
+                        <input type="number" id="entry-personnel" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-3 text-white focus:border-blue-500 outline-none" value="3" min="1">
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg transition-transform active:scale-95 flex justify-center items-center gap-2">
+                        <i data-lucide="check" class="w-5 h-5"></i> Check-In Unit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        // State
+        let units = [];
+        let draggedUnitId = null;
+
+        // Elements
+        const viewBoard = document.getElementById('view-board');
+        const viewEntry = document.getElementById('view-entry');
+        const tabBoardBtn = document.getElementById('tab-board-btn');
+        const tabEntryBtn = document.getElementById('tab-entry-btn');
+        const form = document.getElementById('add-unit-form');
+        
+        const zoneStaging = document.getElementById('zone-staging');
+        const zoneDeployed = document.getElementById('zone-deployed');
+        
+        const countStaging = document.getElementById('count-staging-units');
+        const countDeployed = document.getElementById('count-deployed-units');
+
+        // --- Tabs Logic ---
+        tabBoardBtn.addEventListener('click', () => switchTab('board'));
+        tabEntryBtn.addEventListener('click', () => switchTab('entry'));
+
+        function switchTab(tab) {
+            if (tab === 'board') {
+                viewBoard.classList.remove('hidden');
+                viewEntry.classList.add('hidden');
+                tabBoardBtn.classList.add('active');
+                tabBoardBtn.classList.remove('inactive');
+                tabEntryBtn.classList.remove('active');
+                tabEntryBtn.classList.add('inactive');
+                renderBoard(); // Refresh board on switch
+            } else {
+                viewBoard.classList.add('hidden');
+                viewEntry.classList.remove('hidden');
+                tabBoardBtn.classList.remove('active');
+                tabBoardBtn.classList.add('inactive');
+                tabEntryBtn.classList.add('active');
+                tabEntryBtn.classList.remove('inactive');
+                document.getElementById('entry-id').focus();
+            }
+        }
+
+        // --- Unit Logic ---
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('entry-id').value.trim().toUpperCase();
+            const type = document.getElementById('entry-type').value;
+            const personnel = document.getElementById('entry-personnel').value;
+
+            if(!id) return;
+
+            const newUnit = {
+                id: Date.now().toString(),
+                name: id,
+                type: type,
+                personnel: personnel,
+                status: 'staging', // or 'deployed'
+                checkInTime: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            };
+
+            units.push(newUnit);
+            
+            // Reset form
+            document.getElementById('entry-id').value = '';
+            document.getElementById('entry-personnel').value = '3';
+            
+            // Go back to board
+            switchTab('board');
+            
+            // Show toast or feedback (optional)
+        });
+
+        // --- Drag & Drop ---
+        function allowDrop(ev) {
+            ev.preventDefault();
+            const zone = ev.currentTarget;
+            zone.classList.add('drag-over');
+        }
+
+        // Add dragleave event listeners to remove the class
+        zoneStaging.addEventListener('dragleave', (e) => e.currentTarget.classList.remove('drag-over'));
+        zoneDeployed.addEventListener('dragleave', (e) => e.currentTarget.classList.remove('drag-over'));
+
+        function drag(ev, unitId) {
+            draggedUnitId = unitId;
+            ev.dataTransfer.setData("text", unitId);
+            ev.target.classList.add('dragging');
+        }
+
+        function drop(ev, targetStatus) {
+            ev.preventDefault();
+            const zone = ev.currentTarget;
+            zone.classList.remove('drag-over');
+            
+            const unitId = ev.dataTransfer.getData("text");
+            const unitIndex = units.findIndex(u => u.id === unitId);
+            
+            if (unitIndex > -1) {
+                units[unitIndex].status = targetStatus;
+                renderBoard();
+            }
+        }
+
+        function deleteUnit(id) {
+            if(confirm('Remove this unit from the board?')) {
+                units = units.filter(u => u.id !== id);
+                renderBoard();
+            }
+        }
+
+        // --- Rendering ---
+        function renderBoard() {
+            zoneStaging.innerHTML = '';
+            zoneDeployed.innerHTML = '';
+            
+            let stagingCount = 0;
+            let deployedCount = 0;
+
+            units.forEach(unit => {
+                const card = createUnitCard(unit);
+                if (unit.status === 'staging') {
+                    zoneStaging.appendChild(card);
+                    stagingCount++;
+                } else {
+                    zoneDeployed.appendChild(card);
+                    deployedCount++;
+                }
+            });
+
+            countStaging.textContent = stagingCount;
+            countDeployed.textContent = deployedCount;
+        }
+
+        function createUnitCard(unit) {
+            const div = document.createElement('div');
+            div.className = "unit-card bg-gray-700 p-3 rounded-lg border border-gray-600 shadow-sm flex justify-between items-center group select-none";
+            div.draggable = true;
+            div.addEventListener('dragstart', (e) => drag(e, unit.id));
+            div.addEventListener('dragend', (e) => e.target.classList.remove('dragging'));
+
+            // Color coding based on type
+            let iconColor = "text-gray-400";
+            if(unit.type === 'Engine') iconColor = "text-red-400";
+            if(unit.type === 'Truck') iconColor = "text-blue-400";
+            if(unit.type === 'Rescue') iconColor = "text-green-400";
+            if(unit.type === 'Chief') iconColor = "text-white";
+
+            div.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="font-bold text-lg text-white ${iconColor}">${unit.name}</div>
+                    <div class="text-xs text-gray-400 flex flex-col">
+                        <span>${unit.type} (${unit.personnel})</span>
+                        <span class="text-[10px] opacity-75">In: ${unit.checkInTime}</span>
+                    </div>
+                </div>
+                <button onclick="deleteUnit('${unit.id}')" class="text-gray-600 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            `;
+            return div;
+        }
+
+        // Initialize Icons
+        lucide.createIcons();
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(reg => console.log('SW Registered'))
+                    .catch(err => console.log('SW Error:', err));
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive High-Rise Tactical Board</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#111827"/>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* gray-900 */
+        }
+        
+        /* Custom Scrollbar from Styles.css */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+        .unit {
+            cursor: grab;
+            transition: background-color 0.2s ease;
+        }
+        .unit:active {
+            cursor: grabbing;
+        }
+        .drop-zone {
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            min-height: 100px;
+        }
+        .drop-zone.drag-over {
+            background-color: #7f1d1d90; /* Red-900 with opacity */
+            border-color: #ef4444; /* Red-500 */
+        }
+        .building-floor {
+            border-top: 2px solid #4b5563; /* gray-600 */
+            border-bottom: 2px solid #4b5563; /* gray-600 */
+            position: relative;
+        }
+        .floor-label {
+            position: absolute;
+            top: 50%;
+            left: -1rem;
+            transform: translateY(-50%) translateX(-100%);
+            color: #9ca3af; /* gray-400 */
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #1f2937; /* gray-800 */
+            margin: auto;
+            padding: 24px;
+            border: 1px solid #374151; /* gray-700 */
+            width: 90%;
+            max-width: 500px;
+            border-radius: 0.5rem;
+        }
+        .modal.active {
+            display: flex;
+        }
+        
+        /* Stop input fields from being draggable */
+        .unit input {
+            cursor: text;
+        }
+
+        /* Added for spinner */
+        .hidden {
+            display: none;
+        }
+
+        /* Custom focus rings to match theme */
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        textarea:focus {
+            --tw-ring-color: #ef4444; /* red-500 */
+            border-color: #ef4444; /* red-500 */
+        }
+    </style>
+</head>
+<body class="text-gray-100 p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-6 flex items-center justify-between gap-4">
+            
+            <a href="index.html" class="p-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg border border-gray-700 transition-colors shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </a>
+            <img src="logo.jpg" alt="Logo" class="h-16 w-16 rounded-lg" 
+                 onerror="this.style.display='none'; this.parentElement.querySelector('.spacer').style.display='none';">
+            
+            <div class="flex-grow text-center px-4">
+                <h1 class="text-3xl font-bold text-red-500">High-Rise Tactical Board</h1>
+                <p class="text-lg text-gray-400">Drag units to their correct 1st Alarm assignments. Click a unit to see key tasks.</p>
+            </div>
+            
+            <div class="h-16 w-16 spacer"></div> </header>
+
+        <div class="mb-6 bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+            <h2 class="text-xl font-semibold mb-4 text-gray-200">Incident Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label for="incident-number" class="block text-sm font-medium text-gray-300">Incident Number</label>
+                    <input type="text" id="incident-number" placeholder="e.g., 2025-001234" class="mt-1 block w-full p-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
+                </div>
+                <div>
+                    <label for="incident-address" class="block text-sm font-medium text-gray-300">Address</label>
+                    <input type="text" id="incident-address" placeholder="e.g., 123 Main St" class="mt-1 block w-full p-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
+                </div>
+                <div>
+                    <label for="incident-date" class="block text-sm font-medium text-gray-300">Date</label>
+                    <input type="date" id="incident-date" class="mt-1 block w-full p-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500" style="color-scheme: dark;">
+                </div>
+            </div>
+        </div>
+        <div class="flex flex-col md:flex-row gap-6">
+
+            <div class="md:w-1/3 lg:w-1/4 space-y-6">
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-200">Second Alarm Units</h2>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="add-engine" class="text-sm bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition-colors">Add Engine</button>
+                        <button id="add-truck" class="text-sm bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 transition-colors">Add Truck</button>
+                        <button id="add-chief" class="text-sm bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 transition-colors">Add Chief</button>
+                        <button id="add-division" class="text-sm bg-gray-500 text-white px-3 py-2 rounded-md hover:bg-gray-600 transition-colors">Add Division</button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-200">1st Alarm Units</h2>
+                        <button id="reset-button" class="text-sm bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition">Reset</button>
+                    </div>
+                    <div id="unit-pool" class="space-y-3 min-h-[300px]">
+                        </div>
+                </div>
+
+            </div>
+
+            <div class="md:w-2/3 lg:w-3/4">
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+                    <h2 class="text-xl font-semibold mb-6 text-center text-gray-200">Incident Scene</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        
+                        <div 
+                            id="loc-cp" 
+                            class="drop-zone border-2 border-dashed border-gray-600 rounded-lg p-3 bg-gray-700"
+                            data-location-name="Incident Command Post (CP)"
+                            ondragover="handleDragOver(event)" 
+                            ondragleave="handleDragLeave(event)" 
+                            ondrop="handleDrop(event)">
+                            <h3 class="font-semibold text-gray-300 text-center">Incident Command Post (CP)</h3>
+                            <p class="text-xs text-gray-400 text-center mb-2">(Outside Building)</p>
+                            <div class="space-y-2 unit-container"></div>
+                        </div>
+
+                        <div class="space-y-1 relative pt-8 md:pt-0">
+                            <div class="building-floor bg-yellow-900/50 border-yellow-500 relative">
+                                <span class="floor-label text-yellow-300">Floor Above Fire</span>
+                                <div 
+                                    id="loc-above" 
+                                    class="drop-zone p-3"
+                                    data-location-name="Floor Above Fire"
+                                    ondragover="handleDragOver(event)" 
+                                    ondragleave="handleDragLeave(event)" 
+                                    ondrop="handleDrop(event)">
+                                    <div class="space-y-2 unit-container"></div>
+                                </div>
+                            </div>
+                            <div class="building-floor bg-red-900/60 border-red-500 relative">
+                                <span class="floor-label text-red-400">Fire Floor</span>
+                                <div 
+                                    id="loc-fire" 
+                                    class="drop-zone p-3"
+                                    data-location-name="Fire Floor"
+                                    ondragover="handleDragOver(event)" 
+                                    ondragleave="handleDragLeave(event)" 
+                                    ondrop="handleDrop(event)">
+                                    <div class="space-y-2 unit-container"></div>
+                                </div>
+                            </div>
+                            <div class="building-floor bg-orange-900/50 border-orange-500 relative">
+                                <span class="floor-label text-orange-400">RIC Staging</span>
+                                <div 
+                                    id="loc-ric" 
+                                    class="drop-zone p-3"
+                                    data-location-name="RIC Staging (1 Floor Below)"
+                                    ondragover="handleDragOver(event)" 
+                                    ondragleave="handleDragLeave(event)" 
+                                    ondrop="handleDrop(event)">
+                                    <p class="text-xs text-gray-400 text-center font-medium">(1 Floor Below Fire)</p>
+                                    <div class="space-y-2 unit-container"></div>
+                                </div>
+                            </div>
+                            <div class="building-floor bg-blue-900/50 border-blue-500 relative">
+                                <span class="floor-label text-blue-300">Staging</span>
+                                <div 
+                                    id="loc-staging" 
+                                    class="drop-zone p-3"
+                                    data-location-name="Staging (2 Floors Below)"
+                                    ondragover="handleDragOver(event)" 
+                                    ondragleave="handleDragLeave(event)" 
+                                    ondrop="handleDrop(event)">
+                                    <p class="text-xs text-gray-400 text-center font-medium">(2 Floors Below Fire)</p>
+                                    <div class="space-y-2 unit-container"></div>
+                                </div>
+                            </div>
+                            <div class="building-floor bg-gray-700 relative">
+                                <span class="floor-label text-gray-400">Lobby</span>
+                                <div 
+                                    id="loc-lobby" 
+                                    class="drop-zone p-3"
+                                    data-location-name="Lobby Control"
+                                    ondragover="handleDragOver(event)" 
+                                    ondragleave="handleDragLeave(event)" 
+                                    ondrop="handleDrop(event)">
+                                    <div class="space-y-2 unit-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700 mt-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-200">Incident Narrative</h2>
+                    <div>
+                        <label for="narrative-input" class="block text-sm font-medium text-gray-300">Informal Narrative / IC Notes</label>
+                        <textarea id="narrative-input" rows="6" class="mt-1 block w-full p-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500" placeholder="e.g., E65 arrived, reported smoke on floor 10. T67 proceeded to floor above..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <button id="generate-nfirs-btn" class="mt-4 inline-flex items-center bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50">
+                            <svg id="nfirs-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Generate NFIRS Narrative
+                        </button>
+                        <button id="print-report-btn" class="mt-4 ml-2 inline-flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v6a2 2 0 002 2h1v-4a1 1 0 011-1h8a1 1 0 011 1v4h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm3 0h4v3H8V4zm6 11h-1v-2a1 1 0 00-1-1H8a1 1 0 00-1 1v2H6v-1h8v1z" clip-rule="evenodd" />
+                            </svg>
+                            Print to Document (.doc)
+                        </button>
+                        <button id="generate-pia-btn" class="mt-4 ml-2 inline-flex items-center bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50">
+                            <svg id="pia-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Generate PIA
+                        </button>
+                        </div>
+
+                    <div id="nfirs-output-container" class="mt-4 hidden">
+                        <h3 class="text-lg font-semibold text-gray-200">Generated NFIRS Narrative</h3>
+                        <div id="nfirs-output" class="mt-2 p-3 bg-gray-900 border border-gray-700 rounded-md whitespace-pre-wrap font-mono text-sm text-gray-300 min-h-[100px]"></div>
+                    </div>
+                    
+                    <div id="pia-output-container" class="mt-4 hidden">
+                        <h3 class="text-lg font-semibold text-gray-200">Generated Post-Incident Analysis (PIA)</h3>
+                        <div id="pia-output" class="mt-2 p-3 bg-gray-900 border border-gray-700 rounded-md whitespace-pre-wrap font-mono text-sm text-gray-300 min-h-[100px]"></div>
+                    </div>
+                    </div>
+                </div>
+        </div>
+
+        <div class="mt-8 bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg border border-gray-700">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-200">Reference Data</h2>
+            <div class="flex flex-col lg:flex-row gap-8">
+                <div class="flex-1">
+                    <h3 class="text-xl font-semibold mb-2 text-gray-200">Building Operations Model</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[400px] text-left">
+                            <thead class="bg-gray-700">
+                                <tr>
+                                    <th class="p-2 rounded-tl-lg text-gray-300">Location</th>
+                                    <th class="p-2 text-gray-300">Designation</th>
+                                    <th class="p-2 rounded-tr-lg text-gray-300">Key Units / Resources</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700">
+                                <tr class="hover:bg-gray-700/50">
+                                    <td class="p-2 font-medium text-yellow-300">Floor Above Fire</td>
+                                    <td class="p-2 text-gray-300">---</td>
+                                    <td class="p-2 text-gray-300">3rd Engine, 2nd Truck</td>
+                                </tr>
+                                <tr class="hover:bg-gray-700/50">
+                                    <td class="p-2 font-medium text-red-400">Fire Floor</td>
+                                    <td class="p-2 text-gray-300">---</td>
+                                    <td class="p-2 text-gray-300">1st Engine, 1st Truck, 2nd Engine</td>
+                                </tr>
+                                <tr class="hover:bg-gray-700/50">
+                                    <td class="p-2 font-medium text-orange-400">1 Floor Below Fire</td>
+                                    <td class="p-2 text-gray-300">RIC Staging</td>
+                                    <td class="p-2 text-gray-300">4th Engine (Dedicated RIC)</td>
+                                </tr>
+                                <tr class="hover:bg-gray-700/50">
+                                    <td class="p-2 font-medium text-blue-300">2 Floors Below Fire</td>
+                                    <td class="p-2 text-gray-300">Staging (Level II)</td>
+                                    <td class="p-2 text-gray-300">All uncommitted 2nd Alarm+ resources</td>
+                                </tr>
+                                <tr class="hover:bg-gray-700/50">
+                                    <td class="p-2 font-medium text-green-400">Lobby</td>
+                                    <td class="p-2 text-gray-300">Lobby Control</td>
+                                    <td class="p-2 text-gray-300">1st Squad</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-semibold mb-2 text-gray-200">Alarm Levels & Staging Locations</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[400px] text-left">
+                            <thead class="bg-gray-700">
+                                <tr>
+                                    <th class="p-2 rounded-tl-lg text-gray-300">Designation</th>
+                                    <th class="p-2 rounded-tr-lg text-gray-300">Staging Location / Protocol</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700">
+                                <tr class="hover:bg-gray-700/50"><td class="p-2 font-medium text-red-400">1st Alarm</td><td class="p-2 text-gray-300">Units respond directly to scene/CP.</td></tr>
+                                <tr class="hover:bg-gray-700/50"><td class="p-2 font-medium text-orange-400">2nd Alarm or Greater</td><td class="p-2 text-gray-300">Report to Staging (2 floors below the fire floor).</td></tr>
+                                <tr class="hover:bg-gray-700/50"><td class="p-2 font-medium text-yellow-400">3rd Alarm or Greater</td><td class="p-2 text-gray-300">Report to Base (min. 200 ft from building).</td></tr>
+                                <tr class="hover:bg-gray-700/50"><td class="p-2 font-medium text-orange-500">RIC Staging</td><td class="p-2 text-gray-300">1 floor below the fire floor.</td></tr>
+                                <tr class="hover:bg-gray-700/50"><td class="p-2 font-medium text-blue-400">Staging Floor (Level II)</td><td class="p-2 text-gray-300">2 floors below the fire floor.</td></tr>
+                                <tr class="hover:bg-gray-700/50"><td class="p-2 font-medium text-gray-400">Base Manager</td><td class="p-2 text-gray-300">Manages check-in and deployment at Base.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="unit-modal" class="modal">
+        <div class="modal-content shadow-lg border border-gray-700">
+            <h3 id="modal-title" class="text-xl font-semibold mb-2 text-gray-200">Unit Info</h3>
+            <p id="modal-assignment" class="font-medium text-gray-300 mb-2"></p>
+            <p id="modal-tasks" class="text-gray-400"></p>
+            <button id="modal-close" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Data based on the markdown file
+        const unitData = {
+            'unit-chief-1': { 
+                title: '1st District Chief', 
+                assignment: 'Incident Command Post (CP)', 
+                tasks: 'Establish Command with a clearly announced location, request additional resources (2nd Alarm on confirmation), and maintain accountability.',
+                correctLocation: 'loc-cp',
+                color: 'red'
+            },
+            'unit-engine-1': { 
+                title: '1st Engine', 
+                assignment: 'Fire Floor (Crew) & Floor Below (D/O)', 
+                tasks: 'Entire crew proceeds to fire floor for attack. Driver/Operator stays on floor below (at standpipe outlet) to control flow and pressure (psi) for the attack line.',
+                correctLocation: 'loc-fire',
+                color: 'yellow'
+            },
+            'unit-truck-1': { 
+                title: '1st Truck', 
+                assignment: 'Fire Floor (Crew) or Aerial Operation', 
+                tasks: 'Entire crew reports to the fire floor (if no aerial operation needed). Tasks include: Forcible Entry, Locate Fire, Search and Rescue, Ventilation.',
+                correctLocation: 'loc-fire',
+                color: 'blue'
+            },
+            'unit-squad-1': { 
+                title: '1st Squad', 
+                assignment: 'Lobby Control', 
+                tasks: 'Establish Lobby Control, announce accountability location, secure elevators (Phase I recall), prepare to pressurize stairwells using PPV, and control the fire alarm system/building systems.',
+                correctLocation: 'loc-lobby',
+                color: 'green'
+            },
+            'unit-engine-2': { 
+                title: '2nd Engine', 
+                assignment: 'Fire Floor (Crew) & Ground Level (D/O)', 
+                tasks: 'Driver/Operator establishes the Water Supply to the FDC and remains at the pump panel. The crew reports to the fire floor to assist the 1st Engine with hose deployment and establishing the backup line.',
+                correctLocation: 'loc-fire',
+                color: 'yellow'
+            },
+            'unit-truck-2': { 
+                title: '2nd Truck', 
+                assignment: 'Floor Above Fire', 
+                tasks: 'Position opposite 1st Truck (if no aerial needed). Crew reports to the floor above the fire to support 3rd Engine\'s search, ventilation, and exposure control. (If fire is at the top floor, report to IC).',
+                correctLocation: 'loc-above',
+                color: 'blue'
+            },
+            'unit-engine-3': { 
+                title: '3rd Engine', 
+                assignment: 'Floor Above Fire', 
+                tasks: 'Crew proceeds to the floor above the fire to control vertical fire spread and auto-exposure, and initiate primary search of that floor.',
+                correctLocation: 'loc-above',
+                color: 'yellow'
+            },
+            'unit-engine-4': { 
+                title: '4th Engine (RIC)', 
+                assignment: 'Rapid Intervention Crew (RIC)', 
+                tasks: 'Report to the floor below the fire floor to stage as the dedicated RIC. Bring appropriate RIC equipment bag and tools.',
+                correctLocation: 'loc-ric',
+                color: 'orange'
+            },
+        };
+
+        const unitPool = document.getElementById('unit-pool');
+        const resetButton = document.getElementById('reset-button');
+        const modal = document.getElementById('unit-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalAssignment = document.getElementById('modal-assignment');
+        const modalTasks = document.getElementById('modal-tasks');
+        const modalClose = document.getElementById('modal-close');
+
+        // --- NEW NARRATIVE ELEMENTS ---
+        const narrativeInput = document.getElementById('narrative-input');
+        const generateBtn = document.getElementById('generate-nfirs-btn');
+        const nfirsSpinner = document.getElementById('nfirs-spinner');
+        const nfirsOutputContainer = document.getElementById('nfirs-output-container');
+        const nfirsOutput = document.getElementById('nfirs-output');
+        
+        // --- NEW PIA ELEMENTS ---
+        const piaBtn = document.getElementById('generate-pia-btn');
+        const piaSpinner = document.getElementById('pia-spinner');
+        const piaOutputContainer = document.getElementById('pia-output-container');
+        const piaOutput = document.getElementById('pia-output');
+
+        // Initialize Units
+        function initializeUnits() {
+            unitPool.innerHTML = ''; // Clear pool
+
+            // --- Clear units from the board ---
+            const unitContainersOnBoard = document.querySelectorAll('.drop-zone .unit-container');
+            unitContainersOnBoard.forEach(container => {
+                container.innerHTML = '';
+            });
+
+            // --- Clear Incident Details ---
+            document.getElementById('incident-number').value = '';
+            document.getElementById('incident-address').value = '';
+            document.getElementById('incident-date').value = '';
+
+            // Clear narrative output on reset
+            narrativeInput.value = '';
+            nfirsOutputContainer.classList.add('hidden');
+            nfirsOutput.textContent = '';
+            
+            // --- Clear PIA output on reset ---
+            piaOutputContainer.classList.add('hidden');
+            piaOutput.textContent = '';
+
+            for (const [id, data] of Object.entries(unitData)) {
+                const unitEl = document.createElement('div');
+                unitEl.id = id;
+                unitEl.className = 'unit bg-gray-700 p-3 rounded-md shadow-sm border border-gray-600 hover:bg-gray-600';
+                unitEl.draggable = true;
+                
+                // Create the content for the unit with an input field
+                unitEl.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="font-semibold text-${data.color}-400">${data.title}</span>
+                        <input 
+                            type="text" 
+                            id="input-${id}"
+                            placeholder="e.g., E65" 
+                            class="mt-2 p-1 border border-gray-500 bg-gray-600 rounded-md text-sm text-gray-200 w-full"
+                            onclick="event.stopPropagation()" 
+                            onmousedown="event.stopPropagation()"
+                            onkeydown="event.stopPropagation()"
+                        >
+                    </div>
+                `;
+
+                unitEl.addEventListener('dragstart', handleDragStart);
+                unitEl.addEventListener('click', (e) => {
+                    if (e.target.tagName.toLowerCase() === 'input') return;
+                    showModal(id);
+                });
+                unitPool.appendChild(unitEl);
+            }
+        }
+
+        // Drag and Drop Handlers
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.id);
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const unitEl = document.getElementById(id);
+            const dropZone = e.currentTarget;
+            
+            dropZone.classList.remove('drag-over');
+            
+            // Find the unit-container within the drop zone
+            const container = dropZone.querySelector('.unit-container') || dropZone;
+            container.appendChild(unitEl);
+
+            // Visual feedback
+            const unitInfo = unitData[id];
+            
+            // Handle dynamic units first
+            if (!unitInfo) {
+                unitEl.className = 'unit bg-gray-600 p-3 rounded-md shadow-sm border border-gray-500';
+                return;
+            }
+
+            if (unitInfo.correctLocation === dropZone.id) {
+                unitEl.className = `unit bg-green-800 p-3 rounded-md shadow-sm border border-green-600`;
+            } else {
+                 unitEl.className = `unit bg-red-800 p-3 rounded-md shadow-sm border border-red-600`;
+            }
+        }
+
+        // Modal Handlers
+        function showModal(id, dynamicData = null) {
+            let data;
+            if (id && unitData[id]) {
+                data = unitData[id];
+            } else if (dynamicData) {
+                data = dynamicData;
+            } else {
+                // Try to get data from a dynamic unit on the board
+                const unitEl = document.getElementById(id);
+                if (unitEl) {
+                    data = {
+                        title: unitEl.querySelector('span.font-semibold').textContent,
+                        assignment: 'Unassigned',
+                        tasks: 'This is a dynamically added unit. No pre-defined tasks.'
+                    }
+                } else {
+                    return; // No data to show
+                }
+            }
+            
+            const titleEl = document.getElementById(id)?.querySelector('span.font-semibold');
+            const titleColor = titleEl ? titleEl.className : 'text-gray-200';
+
+            modalTitle.textContent = data.title;
+            modalTitle.className = `text-xl font-semibold mb-2 ${titleColor}`; // Apply color
+            modalAssignment.textContent = `Assignment: ${data.assignment || 'Unassigned'}`;
+            modalTasks.textContent = data.tasks || 'N/A';
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        modalClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Reset Button
+        resetButton.addEventListener('click', initializeUnits);
+
+        let dynamicUnitCounter = 0; // To ensure unique IDs
+
+        function addUnit(type, title, placeholder, color) {
+            dynamicUnitCounter++;
+            const id = `dynamic-unit-${dynamicUnitCounter}`;
+            const data = {
+                title: title,
+                assignment: 'Unassigned',
+                tasks: 'This is a dynamically added unit. No pre-defined tasks.'
+            };
+
+            const unitEl = document.createElement('div');
+            unitEl.id = id;
+            unitEl.className = 'unit bg-gray-700 p-3 rounded-md shadow-sm border border-gray-600 hover:bg-gray-600';
+            unitEl.draggable = true;
+
+            unitEl.innerHTML = `
+                <div class="flex flex-col">
+                    <span class="font-semibold text-${color}-400">${data.title}</span>
+                    <input 
+                        type="text" 
+                        id="input-${id}"
+                        placeholder="${placeholder}" 
+                        class="mt-2 p-1 border border-gray-500 bg-gray-600 rounded-md text-sm text-gray-200 w-full"
+                        onclick="event.stopPropagation()" 
+                        onmousedown="event.stopPropagation()"
+                        onkeydown="event.stopPropagation()"
+                    >
+                </div>
+            `;
+
+            unitEl.addEventListener('dragstart', handleDragStart);
+            unitEl.addEventListener('click', (e) => {
+                if (e.target.tagName.toLowerCase() === 'input') return;
+                showModal(id, data); // Pass the dynamic data
+            });
+
+            // Add to the *top* of the unit pool for visibility
+            unitPool.prepend(unitEl); 
+        }
+
+        // Add Reinforcement Buttons
+        document.getElementById('add-engine').addEventListener('click', () => {
+            addUnit('Engine', 'Engine (New)', 'e.g., E70', 'yellow');
+        });
+        document.getElementById('add-truck').addEventListener('click', () => {
+            addUnit('Truck', 'Truck (New)', 'e.g., T25', 'blue');
+        });
+        document.getElementById('add-chief').addEventListener('click', () => {
+            addUnit('Chief', 'Chief (New)', 'e.g., C5', 'red');
+        });
+        document.getElementById('add-division').addEventListener('click', () => {
+            addUnit('Division', 'Division (New)', 'e.g., Div 10', 'gray');
+        });
+
+        // --- NEW NARRATIVE GENERATION LOGIC ---
+
+        function collectIncidentData() {
+            // 1. Get Incident Details
+            const incidentNumber = document.getElementById('incident-number').value || 'Not specified';
+            const address = document.getElementById('incident-address').value || 'Not specified';
+            const date = document.getElementById('incident-date').value || 'Not specified';
+            
+            let details = `Incident Details:\n- Address: ${address}\n- Incident #: ${incidentNumber}\n- Date: ${date}\n\n`;
+
+            // 2. Get Unit Assignments
+            let assignments = "Unit Assignments:\n";
+            const dropZones = document.querySelectorAll('.drop-zone');
+            
+            dropZones.forEach(zone => {
+                const locationName = zone.dataset.locationName || zone.id;
+                const units = zone.querySelectorAll('.unit');
+                if (units.length > 0) {
+                    assignments += `- ${locationName}:\n`;
+                    units.forEach(unit => {
+                        const title = unit.querySelector('span.font-semibold').textContent;
+                        const unitIdInput = unit.querySelector('input');
+                        const unitId = unitIdInput ? (unitIdInput.value || `(${title})`) : `(${title})`;
+                        assignments += `  - ${unitId}\n`;
+                    });
+                }
+            });
+
+            return details + assignments;
+        }
+
+        async function fetchWithExponentialBackoff(apiUrl, payload, retries = 4, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                    
+                    if (response.status === 429 || response.status >= 500) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2; 
+                    } else {
+                        throw new Error(`API request failed with status ${response.status}`);
+                    }
+                } catch (error) {
+                    if (i === retries - 1) throw error; 
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+            throw new Error('API request failed after all retries');
+        }
+
+
+        generateBtn.addEventListener('click', async () => {
+            const informalNarrative = narrativeInput.value;
+            if (!informalNarrative.trim()) {
+                nfirsOutput.textContent = 'Please enter an informal narrative first.';
+                nfirsOutputContainer.classList.remove('hidden');
+                return;
+            }
+
+            generateBtn.disabled = true;
+            nfirsSpinner.classList.remove('hidden');
+            nfirsOutputContainer.classList.remove('hidden');
+            nfirsOutput.textContent = 'Generating...';
+
+            const incidentContext = collectIncidentData();
+
+            const systemPrompt = "You are an expert fire captain trained in writing NFIRS (National Fire Incident Reporting System) reports. Your task is to convert a user's informal incident narrative into a formal, structured NFIRS report narrative. The narrative must be clear, concise, objective, and written in the past tense. It must include all relevant details such as unit identifiers, actions taken, locations within the structure, and observations. Omit any subjective language, opinions, or humor. Focus only on the facts of the incident as provided.";
+            
+            const userQuery = `Here is the incident context and the informal narrative. Please generate the official NFIRS narrative based *only* on this information.\n\n${incidentContext}\n\nInformal Narrative:\n"${informalNarrative}"`;
+
+            const apiKey = ""; // API key
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            try {
+                const result = await fetchWithExponentialBackoff(apiUrl, payload);
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    nfirsOutput.textContent = candidate.content.parts[0].text;
+                } else {
+                    nfirsOutput.textContent = 'Error: Received an empty response from the API. Please check your narrative and try again.';
+                }
+            } catch (error) {
+                console.error('Error generating narrative:', error);
+                nfirsOutput.textContent = 'Error generating narrative. Please check the console for details and try again.';
+            } finally {
+                generateBtn.disabled = false;
+                nfirsSpinner.classList.add('hidden');
+            }
+        });
+
+        // --- NEW PIA GENERATION LOGIC ---
+        piaBtn.addEventListener('click', async () => {
+            const informalNarrative = narrativeInput.value;
+            if (!informalNarrative.trim()) {
+                piaOutput.textContent = 'Please enter an informal narrative first.';
+                piaOutputContainer.classList.remove('hidden');
+                return;
+            }
+
+            piaBtn.disabled = true;
+            piaSpinner.classList.remove('hidden');
+            piaOutputContainer.classList.remove('hidden');
+            piaOutput.textContent = 'Generating...';
+
+            const incidentContext = collectIncidentData();
+
+            const systemPrompt = "You are an Incident Commander and Training Chief for Palm Harbor Fire Rescue, conducting a formal Post-Incident Analysis (PIA) as per SOP 220. Your analysis must be structured and objective. Based on the provided incident data and informal narrative, generate a PIA. The PIA must: 1. Provide a brief incident summary (based on the narrative). 2. List the units that responded and their assignments (from the provided context). 3. Identify any immediate safety concerns or successes (inferred from the narrative). 4. List key lessons learned. 5. Recommend any follow-up actions or training needed.";
+            
+            const userQuery = `Here is the incident context and the informal narrative. Please generate the formal Post-Incident Analysis (PIA) based *only* on this information.\n\n${incidentContext}\n\nInformal Narrative:\n"${informalNarrative}"`;
+
+            const apiKey = ""; // API key
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            try {
+                const result = await fetchWithExponentialBackoff(apiUrl, payload);
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    piaOutput.textContent = candidate.content.parts[0].text;
+                } else {
+                    piaOutput.textContent = 'Error: Received an empty response from the API. Please check your narrative and try again.';
+                }
+            } catch (error) {
+                console.error('Error generating PIA:', error);
+                piaOutput.textContent = 'Error generating PIA. Please check the console for details and try again.';
+            } finally {
+                piaBtn.disabled = false;
+                piaSpinner.classList.add('hidden');
+            }
+        });
+
+        // --- NEW PRINT TO DOCUMENT LOGIC ---
+        const printBtn = document.getElementById('print-report-btn');
+
+        function downloadHtmlAsDoc(htmlContent, filename) {
+            const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+                "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+                "xmlns='http://www.w3.org/TR/REC-html40'>"+
+                "<head><meta charset='utf-8'><title>Incident Report</title></head><body>";
+            const footer = "</body></html>";
+            
+            // --- NEW: Add dark mode styles for Word ---
+            const styles = `
+                <style>
+                    body {
+                        background-color: #111827; /* gray-900 */
+                        color: #f3f4f6; /* gray-100 */
+                        font-family: Arial, sans-serif;
+                    }
+                    h1, h2, h3 {
+                        color: #f3f4f6; /* gray-100 */
+                    }
+                    h1 {
+                        color: #ef4444; /* red-500 */
+                    }
+                    div {
+                        border: 1px solid #374151; /* gray-700 */
+                        background-color: #1f2937; /* gray-800 */
+                        padding: 10px;
+                        margin-bottom: 10px;
+                    }
+                    ul {
+                        padding-left: 20px;
+                    }
+                    li {
+                        color: #d1d5db; /* gray-300 */
+                    }
+                    p {
+                        color: #d1d5db; /* gray-300 */
+                    }
+                    strong {
+                        color: #9ca3af; /* gray-400 */
+                    }
+                </style>
+            `;
+
+            const sourceHTML = header + styles + htmlContent + footer;
+            
+            const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+            const fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = filename;
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+
+        printBtn.addEventListener('click', () => {
+            const incidentNumber = document.getElementById('incident-number').value || 'Not specified';
+            const address = document.getElementById('incident-address').value || 'Not specified';
+            const date = document.getElementById('incident-date').value || 'Not specified';
+
+            let assignmentsHtml = "<h2>Unit Assignments</h2>";
+            const dropZones = document.querySelectorAll('.drop-zone');
+            
+            dropZones.forEach(zone => {
+                const locationName = zone.dataset.locationName || zone.id;
+                const units = zone.querySelectorAll('.unit');
+                if (units.length > 0) {
+                    assignmentsHtml += `<h3>${locationName}</h3><ul>`;
+                    units.forEach(unit => {
+                        const title = unit.querySelector('span.font-semibold').textContent;
+                        const titleColorClass = unit.querySelector('span.font-semibold').className;
+                        let color = '#d1d5db'; 
+                        if (titleColorClass.includes('text-red-400')) color = '#f87171';
+                        if (titleColorClass.includes('text-yellow-400')) color = '#facc15';
+                        if (titleColorClass.includes('text-blue-400')) color = '#60a5fa';
+                        if (titleColorClass.includes('text-green-400')) color = '#4ade80';
+                        if (titleColorClass.includes('text-orange-400')) color = '#fb923c';
+                        if (titleColorClass.includes('text-gray-400')) color = '#9ca3af';
+
+                        const unitIdInput = unit.querySelector('input');
+                        const unitId = unitIdInput ? (unitIdInput.value || `(${title})`) : `(${title})`;
+                        
+                        assignmentsHtml += `<li><span style="color: ${color};">${unitId}</span></li>`;
+                    });
+                    assignmentsHtml += `</ul>`;
+                }
+            });
+
+            const informalNarrative = narrativeInput.value.replace(/\n/g, '<br>') || 'Not provided.';
+            const nfirsNarrative = nfirsOutput.textContent.replace(/\n/g, '<br>') || 'Not generated.';
+            const piaNarrative = piaOutput.textContent.replace(/\n/g, '<br>') || 'Not generated.';
+
+            const reportHtml = `
+                <h1>High-Rise Incident Report</h1>
+                <hr>
+                <h2>Incident Details</h2>
+                <p><strong>Address:</strong> ${address}</p>
+                <p><strong>Incident Number:</strong> ${incidentNumber}</p>
+                <p><strong>Date:</strong> ${date}</p>
+                <br>
+                ${assignmentsHtml}
+                <br>
+                <h2>Informal Narrative / IC Notes</h2>
+                <div>
+                    <p>${informalNarrative}</p>
+                </div>
+                <br>
+                <h2>Generated NFIRS Narrative</h2>
+                <div>
+                    <p>${nfirsNarrative}</p>
+                </div>
+                <br>
+                <h2>Post-Incident Analysis (PIA)</h2>
+                <div>
+                    <p>${piaNarrative}</p>
+                </div>
+            `;
+            
+            const docFilename = `Incident_Report_${incidentNumber || 'Untitled'}.doc`;
+            downloadHtmlAsDoc(reportHtml, docFilename);
+        });
+
+        // Initial Load
+        initializeUnits();
+    </script>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js');
+            });
+        }
+    </script>
+</body>
+</html>

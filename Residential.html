@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incident Command Board</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1f2937"/>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* --- UNIFIED STYLES FROM STYLES.CSS --- */
+    body {
+        font-family: 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        background-color: #111827; /* gray-900 */
+        color: #f3f4f6; /* gray-100 */
+    }
+
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #1f2937; 
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #4b5563; 
+        border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #6b7280; 
+    }
+
+    /* Helper class to show dragging state */
+    .dragging {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+    /* Helper class for drop zone highlight */
+    .drag-over {
+      border-color: #ef4444 !important; /* red-500 */
+      background-color: #374151 !important; /* gray-700 */
+    }
+
+    /* Specific overrides for this file's inputs to match theme */
+    .header-input input {
+        color: white !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <header class="bg-gray-800 text-white p-4 shadow-md sticky top-0 z-50 border-b border-gray-700">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3 w-full md:w-auto">
+        <a href="index.html" class="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-gray-300 hover:text-white transition-colors border border-gray-600" title="Back to Main Menu">
+            <i data-lucide="home"></i>
+        </a>
+        <div class="p-2 bg-red-600 rounded-lg shadow-lg">
+          <i data-lucide="shield" class="text-white"></i>
+        </div>
+        <div class="flex flex-col w-full">
+          <input
+            id="incidentName"
+            class="bg-transparent text-lg font-bold placeholder-gray-500 outline-none w-full text-white"
+            placeholder="INCIDENT NAME / ADDRESS"
+          />
+          <span class="text-xs text-gray-400">DIGITAL COMMAND BOARD</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex flex-col items-end">
+          <div id="elapsedTime" class="text-3xl font-mono font-bold text-red-500 tabular-nums leading-none">
+            00:00:00
+          </div>
+          <div class="flex gap-2 text-xs mt-1">
+            <button id="startTimerBtn" class="text-green-400 hover:text-green-300 uppercase font-bold tracking-wider">Start Clock</button>
+            <span id="timerStatus" class="text-gray-400 uppercase font-bold tracking-wider hidden">Running</span>
+            <button id="resetTimerBtn" class="text-gray-500 hover:text-gray-300 ml-2 hidden">Reset</button>
+          </div>
+        </div>
+        
+        <button id="resetBoardHeaderBtn" class="p-2 bg-gray-700 rounded hover:bg-red-900/50 text-gray-400 hover:text-red-400 transition-colors border border-gray-600" title="Reset Board">
+          <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 p-2 md:p-4 overflow-x-auto">
+    <div class="max-w-[1600px] mx-auto min-w-[1000px] bg-gray-800 shadow-xl rounded-xl overflow-hidden border border-gray-700">
+      
+      <div class="bg-gray-800 border-b border-gray-700 p-4">
+        <div class="flex gap-6">
+          <div class="flex flex-col gap-2 min-w-[200px]">
+            <span class="text-xs font-black text-gray-500 uppercase tracking-widest">Strategy Mode</span>
+            <div class="grid grid-cols-2 gap-2">
+              
+              <label class="mode-checkbox flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-all bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600">
+                <input type="checkbox" id="mode-invest" class="w-4 h-4 accent-red-600"/>
+                <span class="text-xs font-bold uppercase">Investigative</span>
+              </label>
+              <label class="mode-checkbox flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-all bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600">
+                <input type="checkbox" id="mode-def" class="w-4 h-4 accent-red-600"/>
+                <span class="text-xs font-bold uppercase">Defensive</span>
+              </label>
+              <label class="mode-checkbox flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-all bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600">
+                <input type="checkbox" id="mode-off" class="w-4 h-4 accent-red-600"/>
+                <span class="text-xs font-bold uppercase">Offensive</span>
+              </label>
+              <label class="mode-checkbox flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-all bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600">
+                <input type="checkbox" id="mode-trans" class="w-4 h-4 accent-red-600"/>
+                <span class="text-xs font-bold uppercase">Transition</span>
+              </label>
+
+            </div>
+          </div>
+
+          <div class="flex-1 grid grid-cols-5 gap-2">
+            
+            <div class="header-input flex flex-col bg-gray-700 p-2 rounded border border-gray-600 shadow-sm w-full">
+              <span class="text-[10px] font-bold text-gray-400 uppercase mb-1 flex items-center gap-1"><i data-lucide="radio" class="w-2.5 h-2.5"></i> WFF / CHANNEL</span>
+              <input type="text" placeholder="Ch 1" class="w-full outline-none text-sm font-semibold text-gray-100 bg-transparent placeholder-gray-500"/>
+            </div>
+            <div class="header-input flex flex-col bg-gray-700 p-2 rounded border border-gray-600 shadow-sm w-full">
+              <span class="text-[10px] font-bold text-gray-400 uppercase mb-1 flex items-center gap-1"><i data-lucide="user" class="w-2.5 h-2.5"></i> IC / COMMAND</span>
+              <input type="text" id="ic-input" placeholder="B-61" class="w-full outline-none text-sm font-semibold text-gray-100 bg-transparent placeholder-gray-500"/>
+            </div>
+            <div class="header-input flex flex-col bg-gray-700 p-2 rounded border border-gray-600 shadow-sm w-full">
+              <span class="text-[10px] font-bold text-gray-400 uppercase mb-1 flex items-center gap-1"><i data-lucide="shield" class="w-2.5 h-2.5"></i> SAFETY</span>
+              <input type="text" id="safety-input" placeholder="Unassigned" class="w-full outline-none text-sm font-semibold text-gray-100 bg-transparent placeholder-gray-500"/>
+            </div>
+            <div class="header-input flex flex-col bg-gray-700 p-2 rounded border border-gray-600 shadow-sm w-full">
+              <span class="text-[10px] font-bold text-gray-400 uppercase mb-1 flex items-center gap-1"><i data-lucide="user" class="w-2.5 h-2.5"></i> C.P. AIDE</span>
+              <input type="text" id="aide-input" placeholder="Unassigned" class="w-full outline-none text-sm font-semibold text-gray-100 bg-transparent placeholder-gray-500"/>
+            </div>
+            <div class="header-input flex flex-col bg-gray-700 p-2 rounded border border-gray-600 shadow-sm w-full">
+              <span class="text-[10px] font-bold text-gray-400 uppercase mb-1 flex items-center gap-1"><i data-lucide="map-pin" class="w-2.5 h-2.5"></i> STAGING MGR</span>
+              <input type="text" id="staging-mgr-input" placeholder="Unassigned" class="w-full outline-none text-sm font-semibold text-gray-100 bg-transparent placeholder-gray-500"/>
+            </div>
+
+          </div>
+
+          <div class="w-32">
+             <div class="h-full flex flex-col bg-gray-700 rounded border border-gray-600">
+                <div class="bg-gray-800 text-center text-xs font-bold border-b border-gray-600 p-1 text-gray-400">L.I.P.</div>
+                <textarea 
+                  class="flex-1 w-full p-1 text-xs resize-none outline-none bg-gray-700 text-gray-200 placeholder-gray-500 rounded-b" 
+                  placeholder="Loc/Id/Prob"
+                ></textarea>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 min-h-[600px]">
+        
+        <div class="col-span-3 border-r border-gray-700 p-3 bg-gray-900 flex flex-col gap-2">
+          <h3 class="font-black text-gray-500 text-xs uppercase tracking-widest mb-2">Tactical Assignments</h3>
+          
+          <div class="space-y-2 overflow-y-auto pr-1 custom-scrollbar">
+             
+            <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">Fire Attack 1</div>
+              <div data-zone-id="fireAttack1" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+            <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">Fire Attack 2</div>
+              <div data-zone-id="fireAttack2" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+             <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">Water Supply / FDC</div>
+              <div data-zone-id="waterSupply" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+             <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">R.I.C. Group</div>
+              <div data-zone-id="ric" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+             <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">Primary Search</div>
+              <div data-zone-id="primarySearch" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+             <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">Secondary Search</div>
+              <div data-zone-id="secondarySearch" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+            <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">Ventilation Group</div>
+              <div data-zone-id="ventilation" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+            <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">Utilities Control</div>
+              <div data-zone-id="utilities" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+            <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">Exposure Group</div>
+              <div data-zone-id="exposure" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+            <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">Medical / Triage</div>
+              <div data-zone-id="medical" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+            <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">Drone Ops</div>
+              <div data-zone-id="drone" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+            <div class="flex flex-col">
+              <div class="text-[10px] font-bold text-gray-400 uppercase ml-1">Decon Group</div>
+              <div data-zone-id="decon" class="drop-zone bg-gray-800 border-gray-600 min-h-[45px] flex flex-wrap gap-2 content-start p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500"></div>
+            </div>
+             
+          </div>
+        </div>
+
+        <div class="col-span-6 p-6 bg-gray-800 relative flex flex-col">
+          <h3 class="absolute top-4 left-4 font-black text-gray-700 text-4xl uppercase tracking-widest z-0 select-none">Sector Map</h3>
+          
+          <div class="flex-1 grid grid-rows-[auto_1fr_auto] grid-cols-[100px_1fr_100px] gap-4 h-full z-10">
+            
+            <div class="col-start-2 row-start-1 flex flex-col items-center">
+               <span class="font-bold text-gray-400 mb-2">CHARLIE</span>
+               <div data-zone-id="charlie" class="drop-zone w-full h-24 bg-gray-700 border-gray-600 p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500 flex flex-wrap gap-2 content-start"></div>
+            </div>
+
+            <div class="col-start-1 row-start-2 flex flex-row items-center">
+               <div class="flex flex-col items-center h-full w-full">
+                 <span class="font-bold text-gray-400 rotate-[-90deg] whitespace-nowrap mb-8">BRAVO</span>
+                 <div data-zone-id="bravo" class="drop-zone h-full w-full bg-gray-700 border-gray-600 p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500 flex flex-wrap gap-2 content-start"></div>
+               </div>
+            </div>
+
+            <div class="col-start-2 row-start-2 border-4 border-gray-600 bg-gray-700 rounded flex items-center justify-center relative opacity-80">
+              <i data-lucide="home" class="text-gray-500 w-16 h-16"></i>
+              <span class="absolute text-gray-500 font-bold text-sm bottom-2">STRUCTURE</span>
+            </div>
+
+            <div class="col-start-3 row-start-2 flex flex-row items-center">
+               <div class="flex flex-col items-center h-full w-full">
+                 <span class="font-bold text-gray-400 rotate-[90deg] whitespace-nowrap mb-8">DELTA</span>
+                 <div data-zone-id="delta" class="drop-zone h-full w-full bg-gray-700 border-gray-600 p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500 flex flex-wrap gap-2 content-start"></div>
+               </div>
+            </div>
+
+            <div class="col-start-2 row-start-3 flex flex-col items-center">
+               <div data-zone-id="alpha" class="drop-zone w-full h-24 bg-gray-700 border-gray-600 p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500 flex flex-wrap gap-2 content-start"></div>
+               <span class="font-bold text-gray-400 mt-2">ALPHA (Street Side)</span>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="col-span-3 border-l border-gray-700 p-3 bg-gray-900 flex flex-col gap-4">
+          
+          <div class="bg-gray-800 p-3 rounded shadow-sm border border-gray-700">
+            <h4 class="text-xs font-bold text-blue-400 uppercase mb-2">Resource Check-In</h4>
+            <form id="addUnitForm" class="flex gap-2">
+              <input 
+                id="newUnitName"
+                class="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm outline-none focus:border-blue-500 uppercase font-semibold text-white placeholder-gray-500"
+                placeholder="Unit ID (E1, T4...)"
+                autofocus
+              />
+              <button type="submit" class="bg-blue-600 text-white px-3 rounded hover:bg-blue-700">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+              </button>
+            </form>
+            <div class="grid grid-cols-2 gap-2 mt-3">
+              <button id="applySopBtn" class="flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 transition-colors col-span-1">
+                <i data-lucide="book-check" class="w-3.5 h-3.5"></i>
+                <span>Apply SOP 600-02</span>
+              </button>
+              <button id="undoBtn" class="flex items-center justify-center gap-1.5 px-3 py-2 bg-yellow-600/20 text-yellow-400 border border-yellow-600/50 rounded text-xs font-semibold hover:bg-yellow-600/30 transition-colors">
+                <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>
+                <span>Undo Last</span>
+              </button>
+              <button id="resetBoardBtn" class="flex items-center justify-center gap-1.5 px-3 py-2 bg-red-600/20 text-red-400 border border-red-600/50 rounded text-xs font-semibold hover:bg-red-600/30 transition-colors">
+                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                <span>Reset Board</span>
+              </button>
+              <button id="printBtn" class="flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600/20 text-blue-400 border border-blue-600/50 rounded text-xs font-semibold hover:bg-blue-600/30 transition-colors">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                <span>Print Narrative</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex-1 flex flex-col min-h-[200px]">
+            <div class="flex justify-between items-end mb-1">
+              <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Unassigned / Staging</span>
+              <span id="unassignedCount" class="text-[10px] text-gray-300 bg-gray-700 px-1 rounded">0</span>
+            </div>
+            <div data-zone-id="unassigned" id="unassignedZone" class="drop-zone flex-1 bg-gray-800 border-gray-600 shadow-inner p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500 flex flex-wrap gap-2 content-start">
+              </div>
+          </div>
+
+          <div class="h-1/4 flex flex-col">
+            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">2nd Alarm Staging</span>
+            <div data-zone-id="alarm2" class="drop-zone flex-1 bg-gray-800 border-gray-600 p-2 rounded border-2 border-dashed transition-colors hover:border-blue-500 flex flex-wrap gap-2 content-start"></div>
+          </div>
+
+          <div class="h-1/4 flex flex-col">
+            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Rehab Group</span>
+            <div data-zone-id="rehab" class="drop-zone flex-1 bg-green-900/20 border-green-800 p-2 rounded border-2 border-dashed border-gray-600 transition-colors hover:border-blue-500 flex flex-wrap gap-2 content-start"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-gray-800 border-t border-gray-700 p-2 text-center text-xs text-gray-400">
+    Type unit ID (e.g., E42, T1, R5) and press Enter to add. Drag units to assign them.
+  </footer>
+
+  <div id="confirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm w-full border border-gray-700">
+      <h3 id="confirmModalTitle" class="text-lg font-bold mb-4 text-white">Reset Board</h3>
+      <p id="confirmModalMessage" class="text-sm text-gray-300 mb-6">Are you sure you want to reset the board? This will clear all units and assignments.</p>
+      <div class="flex justify-end gap-3">
+        <button id="confirmModalCancel" class="px-4 py-2 bg-gray-700 rounded text-gray-200 hover:bg-gray-600 font-semibold transition-colors">Cancel</button>
+        <button id="confirmModalConfirm" class="px-4 py-2 bg-red-600 rounded text-white hover:bg-red-700 font-semibold transition-colors">Reset</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // --- STATE ---
+      let startTime = null;
+      let timerInterval = null;
+      let units = []; // Master list: {id, name, type}
+      const initialAssignments = {
+        unassigned: [], fireAttack1: [], fireAttack2: [], waterSupply: [],
+        ric: [], primarySearch: [], secondarySearch: [], ventilation: [],
+        utilities: [], exposure: [], medical: [], drone: [], decon: [],
+        alpha: [], bravo: [], charlie: [], delta: [],
+        alarm2: [], rehab: [],
+      };
+      // Create a deep copy for the assignments state
+      let assignments = JSON.parse(JSON.stringify(initialAssignments));
+      
+      let draggedUnitId = null;
+      let _confirmCallback = null;
+
+      // --- DOM ELEMENTS ---
+      const elapsedTimeEl = document.getElementById('elapsedTime');
+      const startTimerBtn = document.getElementById('startTimerBtn');
+      const timerStatusEl = document.getElementById('timerStatus');
+      const resetTimerBtn = document.getElementById('resetTimerBtn');
+      const resetBoardHeaderBtn = document.getElementById('resetBoardHeaderBtn');
+      
+      const addUnitForm = document.getElementById('addUnitForm');
+      const newUnitNameInput = document.getElementById('newUnitName');
+      const unassignedCountEl = document.getElementById('unassignedCount');
+      
+      const allDropZones = document.querySelectorAll('.drop-zone');
+      const modeCheckboxes = document.querySelectorAll('.mode-checkbox');
+
+      // Modal Elements
+      const confirmModal = document.getElementById('confirmModal');
+      const confirmModalTitle = document.getElementById('confirmModalTitle');
+      const confirmModalMessage = document.getElementById('confirmModalMessage');
+      const confirmModalCancel = document.getElementById('confirmModalCancel');
+      const confirmModalConfirm = document.getElementById('confirmModalConfirm');
+
+      // New Buttons
+      const undoBtn = document.getElementById('undoBtn');
+      const printBtn = document.getElementById('printBtn');
+      const resetBoardBtn = document.getElementById('resetBoardBtn'); // Renamed from clearBoardBtn
+      const applySopBtn = document.getElementById('applySopBtn'); // Renamed from structureResponseBtn
+
+
+      // --- TIMER LOGIC ---
+      function startTimer() {
+        if (!startTime) {
+          startTime = new Date();
+          timerInterval = setInterval(updateTimer, 1000);
+          startTimerBtn.classList.add('hidden');
+          timerStatusEl.classList.remove('hidden');
+          resetTimerBtn.classList.remove('hidden');
+        }
+      }
+
+      function resetTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        startTime = null;
+        elapsedTimeEl.textContent = '00:00:00';
+        startTimerBtn.classList.remove('hidden');
+        timerStatusEl.classList.add('hidden');
+        resetTimerBtn.classList.add('hidden');
+      }
+
+      function updateTimer() {
+        const now = new Date();
+        const diff = now - startTime;
+        const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+        const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+        const s = Math.floor(((diff % 3600000) % 60000) / 1000).toString().padStart(2, '0');
+        elapsedTimeEl.textContent = `${h}:${m}:${s}`;
+      }
+
+      // --- UNIT & ASSIGNMENT LOGIC ---
+      function handleAddUnit(e) {
+        e.preventDefault();
+        const name = newUnitNameInput.value.trim().toUpperCase();
+        if (!name) return;
+
+        let type = 'other';
+        const lower = name.toLowerCase();
+        if (lower.startsWith('e') || lower.includes('eng')) type = 'engine';
+        else if (lower.startsWith('t') || lower.includes('truck') || lower.includes('lad')) type = 'truck';
+        else if (lower.startsWith('r') || lower.includes('res') || lower.startsWith('s') || lower.includes('sq')) type = 'rescue';
+        else if (lower.startsWith('b') || lower.startsWith('c') || lower.includes('chief') || lower.startsWith('d')) type = 'chief';
+
+        const newUnit = {
+          id: Date.now().toString(),
+          name: name,
+          type: type
+        };
+
+        units.push(newUnit);
+        assignments.unassigned.push(newUnit.id);
+        
+        newUnitNameInput.value = '';
+        newUnitNameInput.focus();
+        
+        renderBoard();
+      }
+
+      function createUnitElement(unit) {
+        const el = document.createElement('div');
+        el.draggable = true;
+        el.dataset.unitId = unit.id;
+        
+        // Updated colors for dark theme contrast
+        let colorClasses = 'border-gray-500 text-gray-200 bg-gray-700'; // Default
+        if (unit.type === 'engine') colorClasses = 'border-red-500 text-red-100 bg-red-900/50';
+        else if (unit.type === 'truck') colorClasses = 'border-blue-500 text-blue-100 bg-blue-900/50';
+        else if (unit.type === 'rescue') colorClasses = 'border-green-500 text-green-100 bg-green-900/50';
+        else if (unit.type === 'chief') colorClasses = 'border-yellow-500 text-yellow-100 bg-yellow-900/50';
+        
+        el.className = `unit-chip cursor-move px-3 py-1.5 rounded shadow-sm border-l-4 text-sm font-bold select-none transition-all hover:shadow-md active:scale-95 flex justify-between items-center ${colorClasses}`;
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = unit.name;
+        nameSpan.className = 'unit-name-span cursor-text hover:bg-black/20 px-1 rounded';
+        el.appendChild(nameSpan);
+        
+        nameSpan.addEventListener('click', (e) => {
+          e.stopPropagation(); // prevent drag
+          makeUnitEditable(el, nameSpan, unit);
+        });
+
+        // Drag Handlers
+        el.addEventListener('dragstart', (e) => {
+          draggedUnitId = unit.id;
+          e.dataTransfer.setData("unitId", unit.id);
+          // Add a slight delay so the browser can snapshot the element
+          setTimeout(() => el.classList.add('dragging'), 0);
+        });
+        
+        el.addEventListener('dragend', () => {
+          draggedUnitId = null;
+          el.classList.remove('dragging');
+        });
+        
+        return el;
+      }
+
+      function makeUnitEditable(chipEl, nameSpan, unit) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = unit.name;
+        // Dark theme input
+        input.className = 'w-24 text-sm font-semibold p-0 m-0 border border-blue-500 rounded outline-none bg-gray-900 text-white';
+        
+        chipEl.replaceChild(input, nameSpan);
+        input.focus();
+        input.select();
+
+        const saveChanges = () => {
+          const newName = input.value.trim().toUpperCase();
+          if (newName) {
+            const unitToUpdate = units.find(u => u.id === unit.id);
+            if (unitToUpdate) {
+              unitToUpdate.name = newName;
+              
+              // Re-guess type based on new name
+              const lower = newName.toLowerCase();
+              if (lower.startsWith('e') || lower.includes('eng')) unitToUpdate.type = 'engine';
+              else if (lower.startsWith('t') || lower.includes('truck') || lower.includes('lad')) unitToUpdate.type = 'truck';
+              else if (lower.startsWith('r') || lower.includes('res') || lower.startsWith('s') || lower.includes('sq')) unitToUpdate.type = 'rescue';
+              else if (lower.startsWith('b') || lower.includes('c') || lower.includes('chief') || lower.startsWith('d')) unitToUpdate.type = 'chief';
+              else unitToUpdate.type = 'other';
+            }
+          }
+          renderBoard(); // Re-render the whole board to reflect change
+        };
+
+        input.addEventListener('blur', saveChanges);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            saveChanges();
+          } else if (e.key === 'Escape') {
+            renderBoard(); // Cancel edit and re-render
+          }
+        });
+        input.addEventListener('click', (e) => e.stopPropagation()); // prevent click from bubbling
+        input.addEventListener('dragstart', (e) => e.preventDefault()); // prevent dragging from inside input
+      }
+
+      function renderBoard() {
+        // Clear all zones
+        allDropZones.forEach(zone => {
+          zone.innerHTML = '';
+        });
+
+        // Re-populate all zones
+        for (const zoneId in assignments) {
+          const zoneEl = document.querySelector(`[data-zone-id="${zoneId}"]`);
+          if (zoneEl) {
+            const unitIdsInZone = assignments[zoneId];
+            unitIdsInZone.forEach(unitId => {
+              const unit = units.find(u => u.id === unitId);
+              if (unit) {
+                const unitEl = createUnitElement(unit);
+                zoneEl.appendChild(unitEl);
+              }
+            });
+          }
+        }
+        
+        // Update unassigned count
+        unassignedCountEl.textContent = assignments.unassigned.length;
+      }
+      
+      // --- APPLY SOP 600-02 FUNCTION ---
+      function handleApplySop(e) {
+        e.preventDefault();
+        
+        // 1. Clear the board state
+        units = [];
+        assignments = JSON.parse(JSON.stringify(initialAssignments));
+        
+        // 2. Create and assign units
+        const sopUnits = [
+            { id: 'e1_sop', name: 'E 1', type: 'engine', zone: 'fireAttack1' },
+            { id: 'e2_sop', name: 'E 2', type: 'engine', zone: 'waterSupply' },
+            { id: 'e3_sop', name: 'E 3', type: 'engine', zone: 'ric' },
+            { id: 't1_sop', name: 'T 1', type: 'truck', zone: 'primarySearch' },
+            { id: 's1_sop', name: 'S 1', type: 'rescue', zone: 'utilities' },
+        ];
+
+        sopUnits.forEach(u => {
+            units.push(u); // Add to master list
+            assignments[u.zone].push(u.id); // Assign to zone
+        });
+
+        // 3. Set the input fields
+        document.getElementById('ic-input').value = "DC 1";
+        document.getElementById('staging-mgr-input').value = "E 4"; // Per SOP, 3rd engine is RIC, implies E4 would be staging
+
+        // 4. Set the "Offensive" checkbox
+        const offensiveCheckbox = document.getElementById('mode-off');
+        if (offensiveCheckbox) {
+            offensiveCheckbox.checked = true;
+            // Manually trigger the 'change' event to apply styles
+            offensiveCheckbox.dispatchEvent(new Event('change'));
+        }
+        
+        // 5. Render
+        renderBoard();
+      }
+
+      // --- UNDO FUNCTION ---
+      function handleUndo() {
+        if (units.length === 0) return; // Nothing to undo
+
+        const unitToRemove = units.pop(); // Remove from master list
+        if (!unitToRemove) return;
+
+        const unitIdToRemove = unitToRemove.id;
+
+        // Remove from assignments
+        for (const zoneId in assignments) {
+            assignments[zoneId] = assignments[zoneId].filter(id => id !== unitIdToRemove);
+        }
+        
+        renderBoard(); // Update UI
+      }
+      
+      // --- PRINT NARRATIVE FUNCTIONS ---
+      function getFriendlyZoneName(zoneId) {
+        const names = {
+            unassigned: "Unassigned / Staging",
+            fireAttack1: "Fire Attack 1",
+            fireAttack2: "Fire Attack 2",
+            waterSupply: "Water Supply / FDC",
+            ric: "R.I.C. Group",
+            primarySearch: "Primary Search",
+            secondarySearch: "Secondary Search",
+            ventilation: "Ventilation Group",
+            utilities: "Utilities Control",
+            exposure: "Exposure Group",
+            medical: "Medical / Triage",
+            drone: "Drone Ops",
+            decon: "Decon Group",
+            alpha: "Alpha Sector",
+            bravo: "Bravo Sector",
+            charlie: "Charlie Sector",
+            delta: "Delta Sector",
+            alarm2: "2nd Alarm Staging",
+            rehab: "Rehab Group",
+        };
+        return names[zoneId] || zoneId;
+      }
+
+      function handlePrintNarrative() {
+        let narrative = `<html><head><title>Incident Narrative Report</title><style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 30px; line-height: 1.5; }
+            h1, h2, h3 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+            h1 { font-size: 24px; } h2 { font-size: 20px; margin-top: 30px; } h3 { font-size: 16px; margin-top: 20px; border-bottom: 1px solid #eee; }
+            p { color: #555; }
+            ul { padding-left: 20px; list-style-type: none; }
+            li { margin-bottom: 8px; }
+            .unit { font-weight: bold; color: #000; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+            .no-print { display: none; }
+            @media print {
+                #printPageBtn { display: none; }
+            }
+        </style></head><body>`;
+        
+        narrative += `<button id="printPageBtn" onclick="window.print()" style="position:fixed;top:10px;right:10px;padding:8px 12px;background:#007bff;color:white;border:none;border-radius:5px;cursor:pointer;">Print This Page</button>`;
+        narrative += `<h1>Incident Narrative Report</h1>`;
+        
+        const incidentName = document.getElementById('incidentName').value.trim() || 'N/A';
+        const incidentTime = document.getElementById('elapsedTime').textContent;
+        narrative += `<p><strong>Incident:</strong> ${incidentName}</p>`;
+        narrative += `<p><strong>Incident Duration:</strong> ${incidentTime}</p>`;
+        narrative += `<p><strong>Report Generated:</strong> ${new Date().toLocaleString()}</p>`;
+
+        // Strategy
+        narrative += `<h2>Strategy & Command</h2>`;
+        const modes = [];
+        document.querySelectorAll('.mode-checkbox input:checked').forEach(input => {
+            modes.push(input.nextElementSibling.textContent);
+        });
+        narrative += `<p><strong>Active Strategy:</strong> ${modes.length > 0 ? modes.join(', ') : 'None Selected'}</p>`;
+        
+        // Command Staff
+        narrative += `<div class="grid">`;
+        document.querySelectorAll('.header-input').forEach(el => {
+            const label = el.querySelector('span').textContent.trim();
+            const value = el.querySelector('input').value.trim() || 'N/A';
+            narrative += `<p><strong>${label}:</strong> ${value}</p>`;
+        });
+        narrative += `</div>`;
+        
+        // Unit Assignments
+        narrative += `<h2>Unit Assignments</h2>`;
+        narrative += `<ul>`;
+        
+        let hasAssignedUnits = false;
+        for (const zoneId in assignments) {
+            if (zoneId === 'unassigned') continue; // Handle unassigned last
+            
+            const unitIds = assignments[zoneId];
+            if (unitIds.length > 0) {
+                hasAssignedUnits = true;
+                narrative += `<li><strong>${getFriendlyZoneName(zoneId)}:</strong> `;
+                const unitNames = unitIds.map(id => units.find(u => u.id === id)?.name).filter(Boolean);
+                narrative += `<span class="unit">${unitNames.join(', ')}</span></li>`;
+            }
+        }
+        if (!hasAssignedUnits) {
+            narrative += `<li><p>No units actively assigned.</p></li>`;
+        }
+        narrative += `</ul>`;
+
+        // Unassigned Units
+        narrative += `<h3>Unassigned / Staging</h3>`;
+        const unassignedUnitIds = assignments['unassigned'];
+        if (unassignedUnitIds.length > 0) {
+            const unitNames = unassignedUnitIds.map(id => units.find(u => u.id === id)?.name).filter(Boolean);
+            narrative += `<p><span class="unit">${unitNames.join(', ')}</span></p>`;
+        } else {
+            narrative += `<p>No units in staging.</p>`;
+        }
+        
+        narrative += `<h3>All Units On Scene (${units.length} total)</h3>`;
+        narrative += `<p>${units.map(u => u.name).join(', ') || 'None'}</p>`;
+        
+        narrative += `</body></html>`;
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.open();
+        printWindow.document.write(narrative);
+        printWindow.document.close();
+      }
+
+      // --- DRAG & DROP HANDLERS ---
+      function onDragOver(e) {
+        e.preventDefault();
+        // Provides visual feedback
+        const dropZone = e.target.closest('.drop-zone');
+        if (dropZone) {
+          dropZone.classList.add('drag-over');
+        }
+      }
+      
+      function onDragLeave(e) {
+         const dropZone = e.target.closest('.drop-zone');
+         if (dropZone) {
+           dropZone.classList.remove('drag-over');
+         }
+      }
+
+      function onDrop(e) {
+        e.preventDefault();
+        const dropZone = e.target.closest('.drop-zone');
+        if (!dropZone || !draggedUnitId) return;
+
+        dropZone.classList.remove('drag-over');
+        const targetZoneId = dropZone.dataset.zoneId;
+        
+        // Remove from old zone
+        for (const zoneId in assignments) {
+          assignments[zoneId] = assignments[zoneId].filter(id => id !== draggedUnitId);
+        }
+        
+        // Add to new zone
+        if (assignments[targetZoneId]) {
+          assignments[targetZoneId].push(draggedUnitId);
+        }
+        
+        // Re-render entire board
+        renderBoard();
+      }
+
+      // --- MODAL & RESET LOGIC ---
+      function showConfirm(message, title, callback) {
+        confirmModalTitle.textContent = title;
+        confirmModalMessage.textContent = message;
+        _confirmCallback = callback;
+        confirmModal.classList.remove('hidden');
+        confirmModal.classList.add('flex');
+      }
+
+      function hideConfirm() {
+        _confirmCallback = null;
+        confirmModal.classList.add('hidden');
+        confirmModal.classList.remove('flex');
+      }
+      
+      function handleReset() {
+        showConfirm(
+          'Are you sure you want to reset the board? This will clear all units, assignments, and timers.',
+          'Reset Board',
+          () => {
+            units = [];
+            assignments = JSON.parse(JSON.stringify(initialAssignments));
+            resetTimer();
+            renderBoard();
+            
+            // Clear inputs
+            document.getElementById('incidentName').value = '';
+            document.querySelectorAll('.header-input input').forEach(input => input.value = '');
+            document.querySelector('.w-32 textarea').value = '';
+            modeCheckboxes.forEach(label => {
+              const input = label.querySelector('input');
+              input.checked = false;
+              label.classList.remove('checked-style', 'bg-red-600', 'text-white', 'border-red-700', 'shadow-inner');
+              // Return to default dark theme unchecked state
+              label.classList.add('bg-gray-700', 'text-gray-300', 'border-gray-600');
+            });
+          }
+        );
+      }
+
+      // --- INITIAL EVENT LISTENERS ---
+      startTimerBtn.addEventListener('click', startTimer);
+      resetTimerBtn.addEventListener('click', resetTimer);
+      addUnitForm.addEventListener('submit', handleAddUnit);
+      
+      confirmModalCancel.addEventListener('click', hideConfirm);
+      confirmModalConfirm.addEventListener('click', () => {
+        if (_confirmCallback) {
+          _confirmCallback();
+        }
+        hideConfirm();
+      });
+      
+      allDropZones.forEach(zone => {
+        zone.addEventListener('dragover', onDragOver);
+        zone.addEventListener('dragleave', onDragLeave);
+        zone.addEventListener('drop', onDrop);
+      });
+      
+      // Mode checkbox styling (Updated for Dark Theme)
+      modeCheckboxes.forEach(label => {
+        const input = label.querySelector('input');
+        input.addEventListener('change', () => {
+          if (input.checked) {
+            label.classList.add('checked-style', 'bg-red-600', 'text-white', 'border-red-700', 'shadow-inner');
+            label.classList.remove('bg-gray-700', 'text-gray-300', 'border-gray-600');
+          } else {
+            label.classList.remove('checked-style', 'bg-red-600', 'text-white', 'border-red-700', 'shadow-inner');
+            label.classList.add('bg-gray-700', 'text-gray-300', 'border-gray-600');
+          }
+        });
+      });
+
+      // --- BOOTSTRAP ---
+      lucide.createIcons();
+      renderBoard(); // Initial render
+
+      // --- ADD NEW BUTTON LISTENERS ---
+      resetBoardHeaderBtn.addEventListener('click', handleReset);
+      undoBtn.addEventListener('click', handleUndo);
+      printBtn.addEventListener('click', handlePrintNarrative);
+      resetBoardBtn.addEventListener('click', handleReset);
+      applySopBtn.addEventListener('click', handleApplySop);
+
+    });
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./service-worker.js');
+        });
+    }
+  </script>
+</body>
+</html>

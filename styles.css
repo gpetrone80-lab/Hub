@@ -1,0 +1,46 @@
+body {
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background-color: #111827; /* gray-900 */
+}
+
+/* Custom Scrollbar */
+.custom-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+    background: #1f2937; 
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #4b5563; 
+    border-radius: 4px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: #6b7280; 
+}
+
+/* Triage Colors */
+.triage-red { border-left: 5px solid #ef4444; }
+.triage-yellow { border-left: 5px solid #eab308; }
+.triage-green { border-left: 5px solid #22c55e; }
+.triage-black { border-left: 5px solid #1f2937; } 
+
+/* Modal Overlay */
+#modal-overlay {
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(2px);
+}
+
+/* Editable Inputs in Tables */
+.editable-input {
+    background: transparent;
+    border-bottom: 1px solid #4b5563;
+    color: white;
+    padding: 2px 4px;
+    width: 100%;
+}
+.editable-input:focus {
+    border-bottom: 1px solid #3b82f6;
+    outline: none;
+}

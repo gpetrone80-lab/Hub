@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Rise Operations Dashboard</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#111827"/>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* gray-900 */
+        }
+        
+        /* Custom Scrollbar from Styles.css */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+    </style>
+</head>
+<body class="text-gray-100 antialiased">
+
+    <div class="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+        
+        <a href="index.html" class="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg border border-gray-700 transition-colors text-sm font-medium">
+            <span>&larr; Main Menu</span>
+        </a>
+
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-center text-red-500 mb-2">High-Rise Operations</h1>
+            <p class="text-center text-lg text-gray-400">First Alarm Assignments & Staging</p>
+        </header>
+
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold text-gray-200 border-b border-gray-700 pb-2 mb-6">
+                First Alarm Company Assignments
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
+                    <div class="p-5">
+                        <h3 class="text-xl font-bold text-red-400 mb-2">1st Arriving District Chief</h3>
+                        <dl>
+                            <dt class="font-semibold text-gray-400">Assignment & Location:</dt>
+                            <dd class="text-gray-200 mb-3">Incident Command Post (CP)</dd>
+                            
+                            <dt class="font-semibold text-gray-400">Key Tasks:</dt>
+                            <dd class="text-gray-200">Establish Command with a clearly announced location, request additional resources (2nd Alarm on confirmation), and maintain accountability.</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
+                    <div class="p-5">
+                        <h3 class="text-xl font-bold text-yellow-400 mb-2">1st Arriving Engine</h3>
+                        <dl>
+                            <dt class="font-semibold text-gray-400">Assignment & Location:</dt>
+                            <dd class="text-gray-200 mb-3">Fire Floor (Crew) & Floor Below (Driver/Operator)</dd>
+                            
+                            <dt class="font-semibold text-gray-400">Key Tasks:</dt>
+                            <dd class="text-gray-200">Entire crew proceeds to fire floor for attack. Driver/Operator stays on floor below (at standpipe outlet) to control flow and pressure (psi) for the attack line.</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
+                    <div class="p-5">
+                        <h3 class="text-xl font-bold text-blue-400 mb-2">1st Arriving Truck</h3>
+                        <dl>
+                            <dt class="font-semibold text-gray-400">Assignment & Location:</dt>
+                            <dd class="text-gray-200 mb-3">Fire Floor (Crew) or Aerial Operation</dd>
+                            
+                            <dt class="font-semibold text-gray-400">Key Tasks:</dt>
+                            <dd class="text-gray-200">Entire crew reports to the fire floor (if no aerial operation needed). Tasks include: Forcible Entry, Locate Fire, Search and Rescue, Ventilation.</dd>
+                        </dl>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
+                    <div class="p-5">
+                        <h3 class="text-xl font-bold text-green-400 mb-2">1st Arriving Squad</h3>
+                        <dl>
+                            <dt class="font-semibold text-gray-400">Assignment & Location:</dt>
+                            <dd class="text-gray-200 mb-3">Lobby Control</dd>
+                            
+                            <dt class="font-semibold text-gray-400">Key Tasks:</dt>
+                            <dd class="text-gray-200">Establish Lobby Control, announce accountability location, secure elevators (Phase I recall), prepare to pressurize stairwells using PPV, and control the fire alarm system/building systems.</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
+                    <div class="p-5">
+                        <h3 class="text-xl font-bold text-yellow-400 mb-2">2nd Arriving Engine</h3>
+                        <dl>
+                            <dt class="font-semibold text-gray-400">Assignment & Location:</dt>
+                            <dd class="text-gray-200 mb-3">Fire Floor (Crew) & Ground Level (Driver/Operator)</dd>
+                            
+                            <dt class="font-semibold text-gray-400">Key Tasks:</dt>
+                            <dd class="text-gray-200">Driver/Operator establishes the Water Supply to the FDC and remains at the pump panel. The crew reports to the fire floor to assist the 1st Engine with hose deployment and establishing the backup line. Bring: High-rise pack, bag, hand tools.</dd>
+                        </dl>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
+                    <div class="p-5">
+                        <h3 class="text-xl font-bold text-blue-400 mb-2">2nd Arriving Truck</h3>
+                        <dl>
+                            <dt class="font-semibold text-gray-400">Assignment & Location:</dt>
+                            <dd class="text-gray-200 mb-3">Floor Above Fire</dd>
+                            
+                            <dt class="font-semibold text-gray-400">Key Tasks:</dt>
+                            <dd class="text-gray-200">Position opposite 1st Truck (if no aerial needed). Crew reports to the floor above the fire to support 3rd Engine's search, ventilation, and exposure control. (If fire is at the top floor, report to IC).</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
+                    <div class="p-5">
+                        <h3 class="text-xl font-bold text-yellow-400 mb-2">3rd Engine</h3>
+                        <dl>
+                            <dt class="font-semibold text-gray-400">Assignment & Location:</dt>
+                            <dd class="text-gray-200 mb-3">Floor Above Fire</dd>
+                            
+                            <dt class="font-semibold text-gray-400">Key Tasks:</dt>
+                            <dd class="text-gray-200">Crew proceeds to the floor above the fire to control vertical fire spread and auto-exposure, and initiate primary search of that floor.</dd>
+                        </dl>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
+                    <div class="p-5">
+                        <h3 class="text-xl font-bold text-orange-500 mb-2">4th Engine (RIC)</h3>
+                        <dl>
+                            <dt class="font-semibold text-gray-400">Assignment & Location:</dt>
+                            <dd class="text-gray-200 mb-3">Rapid Intervention Crew (RIC)</dd>
+                            
+                            <dt class="font-semibold text-gray-400">Key Tasks:</dt>
+                            <dd class="text-gray-200">Report to the floor below the fire floor to stage as the dedicated RIC. Bring appropriate RIC equipment bag and tools.</dd>
+                        </dl>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold text-gray-200 border-b border-gray-700 pb-2 mb-6">
+                Building Operations Model
+            </h2>
+            
+            <div class="flex justify-center">
+                <div class="w-full max-w-sm bg-gray-800 border-4 border-gray-600 rounded-t-lg shadow-lg">
+                    
+                    <div class="bg-gray-700 p-2 rounded-t-md">
+                        <h3 class="text-center font-bold text-gray-300">HIGH-RISE</h3>
+                    </div>
+
+                    <div class="flex flex-col-reverse divide-y-4 divide-gray-600">
+                        
+                        <div class="p-6 bg-gray-700">
+                            <h4 class="text-lg font-bold text-center text-green-400">Lobby Control</h4>
+                            <p class="text-center text-sm text-gray-300">(1st Squad)</p>
+                        </div>
+
+                        <div class="p-4 h-16"></div>
+
+                        <div class="p-6 bg-blue-900/50 border-y-2 border-blue-500">
+                            <h4 class="text-lg font-bold text-center text-blue-300">Staging</h4>
+                            <p class="text-center text-sm text-gray-300">(2 Floors Below Fire)</p>
+                            <p class="text-center text-sm text-gray-300">(2nd Alarm+ Resources)</p>
+                        </div>
+
+                        <div class="p-6 bg-orange-900/50 border-y-2 border-orange-500">
+                            <h4 class="text-lg font-bold text-center text-orange-400">RIC Staging</h4>
+                            <p class="text-center text-sm text-gray-300">(1 Floor Below Fire)</p>
+                            <p class="text-center text-sm text-gray-300">(4th Engine)</p>
+                        </div>
+                        
+                        <div class="p-6 bg-red-900/60 border-y-4 border-red-500 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-red-500 opacity-20 animate-pulse"></div>
+                            <h4 class="text-xl font-bold text-center text-red-400 relative z-10">FIRE FLOOR</h4>
+                            <p class="text-center text-sm text-gray-200 relative z-10">(1st Engine, 1st Truck, 2nd Engine)</p>
+                        </div>
+
+                        <div class="p-6 bg-yellow-900/50 border-y-2 border-yellow-500">
+                            <h4 class="text-lg font-bold text-center text-yellow-300">Floor Above Fire</h4>
+                            <p class="text-center text-sm text-gray-300">(3rd Engine, 2nd Truck)</p>
+                        </div>
+                        
+                        <div class="p-4 h-16"></div>
+                        <div class="p-4 h-16"></div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-200 border-b border-gray-700 pb-2 mb-6">
+                Alarm Levels & Staging Locations
+            </h2>
+
+            <div class="space-y-4">
+
+                <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h4 class="text-lg font-semibold text-red-400">1st Alarm</h4>
+                        <p class="text-gray-300"><span class="font-medium text-gray-400">Composition:</span> 4 Engines, 2 Trucks, 1 Squad, 2 District Chiefs (+ optional 1 Rescue or 1 LR)</p>
+                    </div>
+                    <div class="mt-2 sm:mt-0 sm:ml-4 sm:text-right flex-shrink-0">
+                        <span class="font-semibold text-gray-300">Staging:</span>
+                        <p class="text-gray-100">Respond directly to scene/CP</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h4 class="text-lg font-semibold text-orange-400">2nd Alarm or Greater</h4>
+                        <p class="text-gray-300"><span class="font-medium text-gray-400">Composition:</span> 3 Engines, 1 Truck, 1 Squad, 1 District Chief</p>
+                    </div>
+                    <div class="mt-2 sm:mt-0 sm:ml-4 sm:text-right flex-shrink-0">
+                        <span class="font-semibold text-gray-300">Staging:</span>
+                        <p class="text-gray-100">Report to Staging (2 floors below fire)</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h4 class="text-lg font-semibold text-yellow-400">3rd Alarm or Greater</h4>
+                        <p class="text-gray-300"><span class="font-medium text-gray-400">Composition:</span> ---</Muted</p>
+                    </div>
+                    <div class="mt-2 sm:mt-0 sm:ml-4 sm:text-right flex-shrink-0">
+                        <span class="font-semibold text-gray-300">Staging:</span>
+                        <p class="text-gray-100">Report to Base (min. 200 ft from building)</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h4 class="text-lg font-semibold text-orange-500">RIC Staging</h4>
+                        <p class="text-gray-300"><span class="font-medium text-gray-400">Composition:</span> Dedicated RIC (4th Engine)</p>
+                    </div>
+                    <div class="mt-2 sm:mt-0 sm:ml-4 sm:text-right flex-shrink-0">
+                        <span class="font-semibold text-gray-300">Staging:</span>
+                        <p class="text-gray-100">1 floor below the fire floor</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h4 class="text-lg font-semibold text-blue-400">Staging Floor (Level II)</h4>
+                        <p class="text-gray-300"><span class="font-medium text-gray-400">Composition:</span> All uncommitted 2nd Alarm+ resources</p>
+                    </div>
+                    <div class="mt-2 sm:mt-0 sm:ml-4 sm:text-right flex-shrink-0">
+                        <span class="font-semibold text-gray-300">Staging:</span>
+                        <p class="text-gray-100">2 floors below the fire floor</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-400">Base Manager</h4>
+                        <p class="text-gray-300"><span class="font-medium text-gray-400">Composition:</span> IC Assignment (often 1st arriving officer from additional alarm)</p>
+                    </div>
+                    <div class="mt-2 sm:mt-0 sm:ml-4 sm:text-right flex-shrink-0">
+                        <span class="font-semibold text-gray-300">Location:</span>
+                        <p class="text-gray-100">Manages check-in at Base</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </div> 
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js');
+            });
+        }
+    </script>
+</body>
+</html>
