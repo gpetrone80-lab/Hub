@@ -18,10 +18,47 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body class="h-full text-gray-100 flex flex-col relative overflow-x-hidden" id="body-tag">
 
-    <div id="modal-overlay" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <style>
+        /* --- MOBILE SIMULATION MODE CSS (From Staging Officer) --- */
+        body.sim-mobile {
+            max-width: 480px !important;
+            margin: 0 auto;
+            border-left: 1px solid #374151;
+            border-right: 1px solid #374151;
+        }
+
+        /* Force Main Flex Container to Column */
+        body.sim-mobile #main-container {
+            flex-direction: column !important;
+        }
+
+        /* Force Widths to 100% */
+        body.sim-mobile #left-col,
+        body.sim-mobile #right-col {
+            width: 100% !important;
+        }
+
+        /* Force Stats Grid to 2 columns (like mobile) instead of 6 */
+        body.sim-mobile #stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        /* Ensure modal stays centered relative to the simulated viewport */
+        body.sim-mobile #modal-overlay {
+            position: absolute; /* Changes from fixed to absolute to stay within bounds if needed */
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+    </style>
+</head>
+<body class="h-full text-gray-100 flex flex-col relative overflow-x-hidden bg-gray-900 font-sans" id="body-tag">
+
+    <div id="modal-overlay" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm">
         <div class="bg-gray-800 rounded-xl shadow-2xl border border-gray-600 w-full max-w-md p-6 transform transition-all scale-100">
             <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -80,8 +117,9 @@
             </div>
 
             <div class="flex gap-2">
-                <button id="view-toggle-btn" onclick="toggleLayout()" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium border border-gray-500 transition-colors">
-                   🖥️ Desktop View
+                <button id="view-toggle-btn" onclick="toggleView()" class="inline-flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg border border-gray-600 shadow-lg transition-colors text-xs md:text-sm font-bold">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="view-toggle-icon"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                   <span class="hidden md:inline" id="view-toggle-text">Mobile View</span>
                 </button>
 
                 <button onclick="exportToCSV()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors active:scale-95 shadow-lg border border-green-500">
@@ -726,58 +764,32 @@
             document.body.removeChild(link);
         }
 
-        // --- NEW FUNCTION: Layout Toggle ---
-        function toggleLayout() {
+        // --- NEW FUNCTION: Layout Toggle (Replaces toggleLayout with sim-mobile logic) ---
+        let isSimulatedMobile = false;
+        
+        function toggleView() {
             const body = document.getElementById('body-tag');
-            const main = document.getElementById('main-container');
-            const left = document.getElementById('left-col');
-            const right = document.getElementById('right-col');
             const btn = document.getElementById('view-toggle-btn');
-            const statsGrid = document.getElementById('stats-grid');
+            const btnText = document.getElementById('view-toggle-text');
+            const btnIcon = document.getElementById('view-toggle-icon');
 
-            // Check if we are currently forcing desktop
-            const isForced = main.classList.contains('force-desktop');
+            isSimulatedMobile = !isSimulatedMobile;
 
-            if (isForced) {
-                // SWITCH TO: MOBILE (Default)
-                // Remove forcing classes
-                main.classList.remove('force-desktop', 'flex-row', 'min-w-[1024px]');
-                main.classList.add('flex-col'); 
+            if (isSimulatedMobile) {
+                // Switch to Simulated Mobile
+                body.classList.add('sim-mobile');
+                btnText.textContent = "Desktop View";
                 
-                left.classList.remove('w-1/3');
-                left.classList.add('w-full');
+                // Icon: Monitor (Desktop)
+                btnIcon.innerHTML = `<rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>`;
                 
-                right.classList.remove('w-2/3');
-                right.classList.add('w-full');
-
-                // Reset grid to responsive
-                statsGrid.classList.remove('grid-cols-6');
-                statsGrid.classList.add('grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-6');
-                
-                // Disable horizontal scroll
-                body.style.overflowX = 'hidden'; 
-                
-                btn.innerHTML = "🖥️ Desktop View";
             } else {
-                // SWITCH TO: DESKTOP
-                // Add forcing classes
-                main.classList.add('force-desktop', 'flex-row', 'min-w-[1024px]'); // Force 1024px width
-                main.classList.remove('flex-col');
+                // Switch to Default (Responsive/Desktop)
+                body.classList.remove('sim-mobile');
+                btnText.textContent = "Mobile View";
                 
-                left.classList.add('w-1/3');
-                left.classList.remove('w-full');
-                
-                right.classList.add('w-2/3');
-                right.classList.remove('w-full');
-
-                // Force grid to 6 columns
-                statsGrid.classList.add('grid-cols-6');
-                statsGrid.classList.remove('grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-6');
-
-                // Enable horizontal scroll
-                body.style.overflowX = 'auto';
-
-                btn.innerHTML = "📱 Mobile View";
+                // Icon: Smartphone (Mobile)
+                btnIcon.innerHTML = `<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>`;
             }
         }
 
