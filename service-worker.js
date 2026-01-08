@@ -1,4 +1,4 @@
-const CACHE_NAME = 'command-board-v1';
+const CACHE_NAME = 'command-board-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
