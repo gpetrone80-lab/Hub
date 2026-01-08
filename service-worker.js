@@ -1,4 +1,4 @@
-const CACHE_NAME = 'command-board-v3';
+const CACHE_NAME = 'command-board-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -10,8 +10,8 @@ const ASSETS_TO_CACHE = [
   './Staging Officer 2.1.html',
   './manifest.json',
   './icons/icon-192.png',
-  './icons/icon-512.png'
-  // Add any other local images like logo.jpg or 1.png here if needed
+  './icons/icon-512.png',
+  './1.png'
 ];
 
 // Install Event: Cache files
